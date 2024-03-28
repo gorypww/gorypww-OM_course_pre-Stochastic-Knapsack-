@@ -1,28 +1,20 @@
-import random
+from Algorithm import *
 
-def generate_test_cases():
-    test_cases = []
-    for _ in range(100):
-        n = random.randint(1, 10)
-        weights = [random.randint(1, 10) for _ in range(n)]
-        values = [random.randint(1, 10) for _ in range(n)]
-        capacity = random.randint(1, 20)
-        test_cases.append((weights, values, capacity))
-    return test_cases
+# 测试
+## 测试函数
+def test_algorithm_one(N, max_gap, max_iteration):
+    alpha_list = np.random.rand(N)
+    Q = algorithm_one(alpha_list, max_gap, max_iteration, print_info=True)
+    return Q
 
-def test_algorithm():
-    test_cases = generate_test_cases()
-    for i, (weights, values, capacity) in enumerate(test_cases):
-        optimal_solution_dp = knapsack_problem(weights, values, capacity)
-        optimal_solution_ip = solve_binaryIP(values, [weights], [capacity])
-        if optimal_solution_dp != optimal_solution_ip:
-            print(f"Test case {i+1}: Optimal solutions are different.")
-            print(f"Weights: {weights}")
-            print(f"Values: {values}")
-            print(f"Capacity: {capacity}")
-            print(f"Optimal solution (DP): {optimal_solution_dp}")
-            print(f"Optimal solution (IP): {optimal_solution_ip}")
-            print()
-    print("Testing complete.")
+def test_algorithm_two(N, max_gap, max_iteration):
+    alpha_list = np.random.rand(N)
+    Q = generate_initial_bound_uniform(alpha_list)[1]*np.random.rand()
+    print(Q)
+    return algorithm_two(alpha_list, Q, max_gap, max_iteration, print_info=True)
 
-test_algorithm()
+
+## 测试实例
+print(test_algorithm_one(10, 0.1, 100))
+test_knapsack_problem()
+print(test_algorithm_two(10, 0.1, 100))
