@@ -5,7 +5,7 @@ import math
 import time
 import time
 
-np.random.seed(0)
+# np.random.seed(0)
 
 '''
 alpha_list: np.arrar
@@ -18,6 +18,8 @@ def generate_one_demand_uniform(N):
 def generate_initial_bound_uniform(alpha_list):
     # upper_bound为service_level作为分位点
     return 0, sum([4 * alpha for alpha in alpha_list])
+
+## 原文中的生成方法（非负正态）
 
 # 计算当前capacity在原文G rule下的dist(命名为gap)
 def calculate_temp_gap(alpha_list, Q, print_info, T):
@@ -109,7 +111,7 @@ def algorithm_two(alpha_list, Q, max_gap, max_iteration=float('inf'), print_info
 
 
 # 测试solve_binaryIP
-def test_knapsack_problem(test_num=100):
+def test_knapsack_problem(test_num=50, size = 10, print_info=True):
     def knapsack_problem(weights, values, capacity):
         n = len(weights)
         dp = [[0] * (capacity + 1) for _ in range(n + 1)]
@@ -127,15 +129,14 @@ def test_knapsack_problem(test_num=100):
     test_cases = []
     for _ in range(test_num):
         # Generate random weights, values, and capacity
-        weights = np.random.randint(1, 10, size=10)
-        values = np.random.randint(1, 10, size=10)
-        capacity = np.random.randint(10, 20)
+        weights = np.random.randint(1, 10, size)
+        values = np.random.randint(1, 10, size)
+        capacity = np.random.randint(3*size, 6*size)
         test_cases.append((weights, values, capacity))
 
     # Compare solutions and running time for each test case
     dp_total_time = 0
     ip_total_time = 0
-
     for weights, values, capacity in test_cases:
         start_time = time.time()
         dp_solution = knapsack_problem(weights, values, capacity)
@@ -156,5 +157,43 @@ def test_knapsack_problem(test_num=100):
     print("IP Total Time:", ip_total_time, "seconds")
     # 发现IP的求解速度会更慢
 
+def positive_random_normal(e, var):
+    while True:
+        x = np.random.normal(e, var)
+        if x > 0:
+            return x
 
-    
+
+
+# 测试启发式和最优解的gap
+def heuristic_responsive(N = 6, iteration_num = 50):
+    Ed_i = np.array([1,1,2,2,3,3]) # 每个顾客的
+    r_i = np.random.rand(N)
+    Q = N
+    Z_resp = 0
+    Z_IP = 0
+    for _ in range(iteration_num):
+        tuple = one_sample_path(Ed_i, r_i, Q, N)
+        Z_resp += tuple[0]
+        Z_IP += tuple[1]
+    return Z_IP/Z_resp
+
+def one_sample_path(Ed_i, r_i, Q, N):
+    # 换不同的demand分布，看gap差距
+    # demand_sample = np.array([positive_random_normal(x, x/3) for x in Ed_i])
+    demand_sample = np.array([np.random.uniform(2/3 * x, 4/3 * x) for x in Ed_i])
+    # demand_sample = demand_sample.reshape(1, -1)[0]
+    revenue_sample = np.array([(y*np.random.uniform(0.9, 1.1)) for y in r_i])
+    # 按照revenue/demand从大到小排序得到一个新的列表，值为原来的index
+    sorted_index = np.argsort(revenue_sample/demand_sample)[::-1]
+    lambda_sample = np.array([0.0]*N) # 注意数据类型要是浮点型
+    init_Q = Q
+    for i in sorted_index:
+        if demand_sample[i] < Q:
+            Q -= demand_sample[i]
+            lambda_sample[i] = lambda_sample[i] + revenue_sample[i]
+        else:
+            break
+    return sum(lambda_sample), solve_binaryIP(revenue_sample, [demand_sample], [init_Q])[1] # 对比IP
+
+print(heuristic_responsive(6, 500))
