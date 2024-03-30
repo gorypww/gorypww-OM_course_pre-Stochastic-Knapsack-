@@ -29,7 +29,7 @@ def calculate_temp_gap(alpha_list, Q, print_info, T):
         算法2中为[1,4N/gap^2]的均匀分布
     '''
     N = len(alpha_list)
-    r_array = np.copy(alpha_list) # 初始化r(0)
+    r_array = np.array([0.000001]*N) # 初始化r(0)
     for _ in range(T):
         A = generate_one_demand_uniform(N)
         A = A.reshape(1, -1) # 转换为二维数组
@@ -40,7 +40,7 @@ def calculate_temp_gap(alpha_list, Q, print_info, T):
             print("function calculate_temp_gap debug")
     temp_gap = math.sqrt(sum([(r/T)**2 for r in r_array if r > 0])) # 计算temp_gap
     if print_info:
-        print(temp_gap)
+        print("temp_gap:",temp_gap)
     return temp_gap, solution
 
 def solve_binaryIP(c, A, b):
@@ -98,7 +98,7 @@ def algorithm_one(alpha_list, max_gap, max_iteration=float('inf'), print_info = 
         temp_iteration += 1
     if lower >= math.floor(init_upper):
         print("找不到满足条件的Q")
-    return lower
+    return upper
 
 
 def algorithm_two(alpha_list, Q, max_gap, max_iteration=float('inf'), print_info = False):
@@ -166,22 +166,28 @@ def positive_random_normal(e, var):
 
 
 # 测试启发式和最优解的gap
-def heuristic_responsive(N = 6, iteration_num = 50):
-    Ed_i = np.array([1,1,2,2,3,3]) # 每个顾客的
+def heuristic_responsive(N = 10, iteration_num = 50):
+    Ed_i = np.array(range(1, N//2 + 1))
+    Ed_i = np.repeat(Ed_i, 2)  # Duplicate each element in Ed_i
     r_i = np.random.rand(N)
     Q = N
     Z_resp = 0
     Z_IP = 0
+    IP_time = 0
+    greedy_time = 0
     for _ in range(iteration_num):
         tuple = one_sample_path(Ed_i, r_i, Q, N)
         Z_resp += tuple[0]
         Z_IP += tuple[1]
-    return Z_IP/Z_resp
+        IP_time += tuple[3]
+        greedy_time += tuple[2]
+    return Z_IP/Z_resp, greedy_time, IP_time
 
 def one_sample_path(Ed_i, r_i, Q, N):
+    start_time = time.time()
     # 换不同的demand分布，看gap差距
     # demand_sample = np.array([positive_random_normal(x, x/3) for x in Ed_i])
-    demand_sample = np.array([np.random.uniform(2/3 * x, 4/3 * x) for x in Ed_i])
+    demand_sample = np.array([np.random.uniform(x-math.sqrt(x), x+math.sqrt(x)) for x in Ed_i]) # 让均值和方差和原文一样，改为均匀分布
     # demand_sample = demand_sample.reshape(1, -1)[0]
     revenue_sample = np.array([(y*np.random.uniform(0.9, 1.1)) for y in r_i])
     # 按照revenue/demand从大到小排序得到一个新的列表，值为原来的index
@@ -191,9 +197,11 @@ def one_sample_path(Ed_i, r_i, Q, N):
     for i in sorted_index:
         if demand_sample[i] < Q:
             Q -= demand_sample[i]
-            lambda_sample[i] = lambda_sample[i] + revenue_sample[i]
-        else:
-            break
-    return sum(lambda_sample), solve_binaryIP(revenue_sample, [demand_sample], [init_Q])[1] # 对比IP
+            lambda_sample[i] += revenue_sample[i]
+    temp_time = time.time()
+    greedy_time = temp_time - start_time
+    IP_opt = solve_binaryIP(revenue_sample, [demand_sample], [init_Q])[1]
+    IP_time = time.time() - temp_time
+    return sum(lambda_sample), IP_opt, greedy_time, IP_time # 对比IP
 
-print(heuristic_responsive(6, 500))
+print(heuristic_responsive(20, 50))
