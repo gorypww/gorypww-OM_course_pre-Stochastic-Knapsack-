@@ -15,6 +15,6 @@ def test_algorithm_two(N, max_gap, max_iteration):
 
 
 ## 测试实例
-# print(test_algorithm_one(10, 0.1, 100))
-test_knapsack_problem(50, 500)
-# print(test_algorithm_two(10, 0.1, 100))
+print(test_algorithm_one(10, 0.1, 100))
+# test_knapsack_problem(50, 500)
+print(test_algorithm_two(10, 0.1, 100))

@@ -48,6 +48,8 @@ def solve_binaryIP(c, A, b):
     # start_time = time.time()
     model = grb.Model()
     model.setParam('OutputFlag', 0) # 不输出求解过程
+    # 如果c是负数，将其改成0.0001，使其尽可能用掉库存，而不是满足了servicelevel就不发货
+    c = [max(0.0001, x) for x in c]
     x = model.addVars(len(c), vtype=grb.GRB.BINARY)
     expr = grb.quicksum(c[i]*x[i] for i in range(len(c)))
     model.setObjective(expr, grb.GRB.MAXIMIZE)
@@ -96,7 +98,7 @@ def algorithm_one(alpha_list, max_gap, max_iteration=float('inf'), print_info = 
         else:
             lower = temp_Q + 1
         temp_iteration += 1
-    if lower >= math.floor(init_upper):
+    if lower >= math.floor(init_upper) and temp_gap > max_gap:
         print("找不到满足条件的Q")
     return upper
 
@@ -204,4 +206,4 @@ def one_sample_path(Ed_i, r_i, Q, N):
     IP_time = time.time() - temp_time
     return sum(lambda_sample), IP_opt, greedy_time, IP_time # 对比IP
 
-print(heuristic_responsive(20, 50))
+# print(heuristic_responsive(20, 50))
