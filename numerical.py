@@ -11,7 +11,7 @@ np.random.seed(0)
 ## 输入
 N = 3 # 客户数量
 max_gap = 0.1 # 求解CCP问题的gap
-max_iteration = math.ceil(4 * N / max_gap**2) + 1 # 循环上限（算法收敛速度）
+max_iteration = 1000 # 循环上限（算法收敛速度）
 tolerance = 0.05 # 由于服务水平总是无法达到的，还需要给一个容忍度
 print_info = False
 
@@ -24,7 +24,7 @@ def draw_gap(alpha_list, Q, print_info, max_gap, max_iteration, tolerance, compe
     gap_list = [0]
     temp_fill_rate = 0
     compete = [[] for _ in range(N)]
-    while temp_fill_rate < 1 and iteration < max_iteration:
+    while iteration < max_iteration:
         A = alg.generate_one_demand_uniform(N)
         A = A.reshape(1, -1)
         solution, _ = alg.solve_binaryIP(r_array, A, [Q])
@@ -50,7 +50,11 @@ Q = alg.algorithm_one(alpha_list, max_gap, max_iteration, print_info)
 fill_rate_list, gap_list = draw_gap(alpha_list, Q, print_info, max_gap, max_iteration, tolerance)
 plt.plot(range(len(fill_rate_list)), fill_rate_list)
 plt.xlabel('Time')
-plt.ylabel('% of achieving service rate customers')
+plt.ylabel('% of achieving service level customers')
+plt.show()
+plt.plot(range(100), fill_rate_list[:100])
+plt.xlabel('Time')
+plt.ylabel('% of achieving service level customers')
 plt.show()
 plt.plot(range(len(gap_list)), gap_list)
 plt.xlabel('Time')
@@ -60,7 +64,7 @@ plt.show()
 np.random.seed(12)
 
 
-# 虚高服务水平是否是更有策略
+# 是否存在博弈：虚高服务水平是否有效
 ## 输入
 alpha_true = [0.6,0.6,0.6]
 alpha_compete = copy.deepcopy(alpha_true)
@@ -107,7 +111,7 @@ for i in range(len(nocompete_converge)):
     plt.plot(range(len(compete_converge[i])), compete_converge[i], label='Competition', linestyle='--',color = 'green')
     plt.axhline(y=alpha_true[i], color='red', linestyle='-', label='Target_fill_rate')
     plt.xlabel('Time')
-    plt.ylabel('Temp_fill_rate')
+    plt.ylabel('Temp service level')
     plt.legend()
     plt.show()
 

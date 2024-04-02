@@ -36,11 +36,7 @@ def calculate_temp_gap(alpha_list, Q, print_info, T):
         solution, _ = solve_binaryIP(r_array, A, [Q]) # 只关心最优解
         if solution is not None:
             r_array = [r_array[i] + alpha_list[i] - solution[i] for i in range(N)] # 更新r_array
-        elif print_info:
-            print("function calculate_temp_gap debug")
     temp_gap = math.sqrt(sum([(r/T)**2 for r in r_array if r > 0])) # 计算temp_gap
-    if print_info:
-        print("temp_gap:",temp_gap)
     return temp_gap, solution
 
 def solve_binaryIP(c, A, b):
@@ -83,23 +79,14 @@ def algorithm_one(alpha_list, max_gap, max_iteration=float('inf'), print_info = 
     if print_info:
         print('Upper_bound: ',upper)
     temp_gap = max_gap + 1
-    temp_iteration = 0
     # 二分搜索
     while lower < upper:
         temp_Q = (lower + upper) // 2
-        start_time = time.time()
         temp_gap, _ = calculate_temp_gap(alpha_list, temp_Q, print_info, T)
-        end_time = time.time()
-        if print_info:
-            print(f"二分法第{temp_iteration+1}次循环时间：{end_time - start_time}")
-            print("temp_Q:", temp_Q)
         if temp_gap < max_gap: # 当前capacity满足条件
             upper = temp_Q
         else:
             lower = temp_Q + 1
-        temp_iteration += 1
-    if lower >= math.floor(init_upper) and temp_gap > max_gap:
-        print("找不到满足条件的Q")
     return upper
 
 
